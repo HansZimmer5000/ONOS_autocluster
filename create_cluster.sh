@@ -265,14 +265,15 @@ apply_onos_config(){
 function main() {
     parse_params "$@"
 
-    create_net_ine
-
+    # Prepare
     pull_if_not_present $atomixImage
-    apply_atomix_config
-
-    clone_onos
-    
     pull_if_not_present $onosImage
+    clone_onos
+
+    # Start & Setup
+    create_net_ine
+    create_atomix
+    apply_atomix_config
     create_onos
     apply_onos_config
 }
