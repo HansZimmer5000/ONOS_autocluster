@@ -1,7 +1,6 @@
 #!/bin/bash
 
-#Some infor from: https://github.com/ralish/bash-script-template/blob/stable/script.sh
-
+#Some info from: https://github.com/ralish/bash-script-template/blob/stable/script.sh
 
 netName="onos-cluster-net"
 creatorKey="creator"
@@ -110,7 +109,6 @@ in_subnet() {
 }
 
 nextIp(){
-
   subnet=$1
   ip=$2
 
@@ -148,7 +146,6 @@ pull_if_not_present(){
 
 
 clone_onos(){
-
   if [ ! -d "$HOME/onos" ] ; then
     cd
     git clone https://gerrit.onosproject.org/onos
@@ -157,7 +154,6 @@ clone_onos(){
 }
 
 create_atomix(){
-
   emptyArray=()
   #NEW=("${OLD1[@]}" "${OLD2[@]}")
   for (( i=1; i<=$atomixNum; i++ ))
@@ -198,7 +194,6 @@ create_atomix(){
 }
 
 create_onos(){
-
   emptyArray=()
   #NEW=("${OLD1[@]}" "${OLD2[@]}")
   for (( i=1; i<=$onosNum; i++ ))
@@ -268,7 +263,6 @@ apply_onos_config(){
 }
 
 function main() {
-
     parse_params "$@"
 
     create_net_ine
