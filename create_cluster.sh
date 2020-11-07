@@ -168,7 +168,6 @@ create_atomix(){
       usedIps+=(usedIp)
     done
 
-
     goodIP=""
     IFS=/ read sub mask <<< "$subnet"
     currentIp=$(nextIp $subnet $sub)
@@ -241,7 +240,7 @@ apply_atomix_config(){
   do
     pos=$((i-1))
     cd
-    ./onos/tools/test/bin/atomix-gen-config "${allocatedAtomixIps[$pos]}" /tmp/atomix-$i.conf "${allocatedAtomixIps[*]}" >/dev/null
+    ./onos/tools/test/bin/atomix-gen-config "${allocatedAtomixIps[$pos]}" /tmp/atomix-$i.conf ${allocatedAtomixIps[*]} >/dev/null
     sudo docker cp /tmp/atomix-$i.conf atomix-$i:/opt/atomix/conf/atomix.conf
     sudo docker container start atomix-$i >/dev/null
     echo "Starting container atomix-$i"
@@ -271,10 +270,10 @@ function main() {
     clone_onos
 
     # Start & Setup
-    create_net_ine
     create_atomix
-    apply_atomix_config
     create_onos
+    create_net_ine
+    apply_atomix_config
     apply_onos_config
 }
 
