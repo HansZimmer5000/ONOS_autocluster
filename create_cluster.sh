@@ -268,11 +268,11 @@ function main() {
     create_net_ine
 
     pull_if_not_present $atomixImage
-    pull_if_not_present $onosImage
     apply_atomix_config
 
     clone_onos
     
+    pull_if_not_present $onosImage
     create_onos
     apply_onos_config
 }
