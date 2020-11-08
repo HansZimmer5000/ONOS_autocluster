@@ -37,7 +37,7 @@ EOF
 }
 
 parse_params() {
-# Option parsing
+  # Option parsing
   while [ $# -gt 0 ]; do
       case "$1" in
           --*=*)               a="${1#*=}"; o="${1#*=}"; shift; set -- "$a" "$o" "$@" ;;
@@ -57,7 +57,6 @@ parse_params() {
   echo "onos-containers: $onosNum"
   echo "subnet: $customSubnet"
 }
-
 
 containsElement () {
   local e match="$1"
@@ -114,14 +113,11 @@ nextIp(){
   subnet=$1
   ip=$2
 
-  #echo "subnet:$subnet, ip:$ip"
-
   ip_hex=$(printf '%.2X%.2X%.2X%.2X\n' `echo $ip | sed -e 's/\./ /g'`)
   next_ip_hex=$(printf %.8X `echo $(( 0x$ip_hex + 1 ))`)
   next_ip=$(printf '%d.%d.%d.%d\n' `echo $next_ip_hex | sed -r 's/(..)/0x\1 /g'`)
 
   val=$(in_subnet $subnet $next_ip)
-  #echo "in_subnet:$val"
 
   if ! $val;
   then
@@ -146,7 +142,6 @@ pull_if_not_present(){
   fi
 }
 
-
 clone_onos(){
   if [ ! -d "$HOME/onos" ] ; then
     cd
@@ -157,7 +152,6 @@ clone_onos(){
 
 create_atomix(){
   emptyArray=()
-  #NEW=("${OLD1[@]}" "${OLD2[@]}")
   for (( i=1; i<=$atomixNum; i++ ))
   do
     usedIps=("${emptyArray[@]}" "${allocatedAtomixIps[@]}")
@@ -175,7 +169,6 @@ create_atomix(){
     currentIp=$(nextIp $subnet $sub)
     while [ -z "$goodIP" ]
     do
-      #if [[ ! " ${usedIps[@]} " =~ " ${currentIp} " ]]; then
       if ! containsElement $currentIp "${usedIps[@]}";
       then
         sudo docker create -t --name atomix-$i --hostname atomix-$i --net $netName --ip $currentIp $atomixImage >/dev/null
@@ -194,7 +187,6 @@ create_atomix(){
 
 create_onos(){
   emptyArray=()
-  #NEW=("${OLD1[@]}" "${OLD2[@]}")
   for (( i=1; i<=$onosNum; i++ ))
   do
     usedIps=("${emptyArray[@]}" "${allocatedOnosIps[@]}" "${allocatedAtomixIps[@]}")
@@ -230,8 +222,6 @@ create_onos(){
     done
 
     allocatedOnosIps+=($goodIP)
-    #atomixIp=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' atomix-$i)
-
   done
 }
 
