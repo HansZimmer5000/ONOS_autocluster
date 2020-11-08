@@ -260,7 +260,7 @@ apply_onos_config(){
 save_docker_logs(){
   for name in $@
   do
-    docker logs -f $name >/tmp/$name.log 2>&1
+    nohup docker logs -f $name >/tmp/$name.log 2>&1 &
   done
 }
 
