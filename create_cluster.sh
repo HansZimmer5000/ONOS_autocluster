@@ -182,6 +182,7 @@ create_atomix(){
     export OC$i=$goodIP
 
     allocatedAtomixIps+=($goodIP)
+    atomixContainerNames+=("atomix-$i")
   done
 }
 
@@ -222,6 +223,7 @@ create_onos(){
     done
 
     allocatedOnosIps+=($goodIP)
+    onosContainerNames+=("onos$i")
   done
 }
 
@@ -251,6 +253,14 @@ apply_onos_config(){
   done
 }
 
+# $@ = Each parameter is one container name
+save_docker_logs(){
+  for name in $@
+  do
+    docker logs -f $name >/tmp/$name.log 2>&1
+  done
+}
+
 function main() {
     parse_params "$@"
 
@@ -265,7 +275,7 @@ function main() {
     create_net_ine
     apply_atomix_config
     apply_onos_config
-    save_docker_logs 
+    save_docker_logs ${atomixContainerNames[@]} ${onosContainerNames[@]}
 }
 
 # Make it rain
