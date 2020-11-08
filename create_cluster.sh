@@ -275,12 +275,8 @@ function main() {
     pull_if_not_present $atomixImage
     pull_if_not_present $onosImage
     clone_onos
-<<<<<<< HEAD
 
     # Start & Setup
-=======
-    
->>>>>>> main
     create_atomix
     create_onos
     create_net_ine
