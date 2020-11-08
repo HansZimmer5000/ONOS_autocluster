@@ -248,7 +248,7 @@ apply_onos_config(){
   do
     pos=$((i-1))
     cd
-    $ONOS_ROOT/tools/test/bin/onos-gen-config "${allocatedOnosIps[$pos]}" $logs_and_configs_dir/cluster-$i.json -n "${allocatedAtomixIps[*]}" >/dev/null
+    $ONOS_ROOT/tools/test/bin/onos-gen-config "${allocatedOnosIps[$pos]}" $logs_and_configs_dir/cluster-$i.json -n ${allocatedAtomixIps[*]} >/dev/null
     sudo docker exec onos$i mkdir /root/onos/config
     echo "Copying configuration to onos$i"
     sudo docker cp $logs_and_configs_dir/cluster-$i.json onos$i:/root/onos/config/cluster.json
