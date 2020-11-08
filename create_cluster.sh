@@ -18,6 +18,8 @@ customGateway=172.20.0.1
 
 allocatedAtomixIps=()
 allocatedOnosIps=()
+atomixContainerNames=()
+onosContainerNames=()
 
 # Handling arguments, taken from (goodmami)
 # https://gist.github.com/goodmami/f16bf95c894ff28548e31dc7ab9ce27b
@@ -187,8 +189,6 @@ create_atomix(){
     export OC$i=$goodIP
 
     allocatedAtomixIps+=($goodIP)
-    #atomixIp=$(sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' atomix-$i)
-
   done
 }
 
@@ -275,6 +275,7 @@ function main() {
     create_net_ine
     apply_atomix_config
     apply_onos_config
+    save_docker_logs 
 }
 
 # Make it rain
