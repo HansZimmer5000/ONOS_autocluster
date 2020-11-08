@@ -6,6 +6,9 @@ netName="onos-cluster-net"
 creatorKey="creator"
 creatorValue="onos-cluster-create"
 
+# Set by bash_profile (if imported): https://github.com/opennetworkinglab/onos/blob/master/README.md#build-onos-from-source
+ONOS_ROOT=${ONOS_ROOT:-./onos}
+
 atomixVersion="3.1.5"
 atomixImage="atomix/atomix:$atomixVersion"
 onosVersion="2.2.1"
@@ -232,7 +235,7 @@ apply_atomix_config(){
   do
     pos=$((i-1))
     cd
-    ./onos/tools/test/bin/atomix-gen-config "${allocatedAtomixIps[$pos]}" /tmp/atomix-$i.conf ${allocatedAtomixIps[*]} >/dev/null
+    $ONOS_ROOT/tools/test/bin/atomix-gen-config "${allocatedAtomixIps[$pos]}" /tmp/atomix-$i.conf ${allocatedAtomixIps[*]} >/dev/null
     sudo docker cp /tmp/atomix-$i.conf atomix-$i:/opt/atomix/conf/atomix.conf
     sudo docker container start atomix-$i >/dev/null
     echo "Starting container atomix-$i"
@@ -244,7 +247,7 @@ apply_onos_config(){
   do
     pos=$((i-1))
     cd
-    ./onos/tools/test/bin/onos-gen-config "${allocatedOnosIps[$pos]}" /tmp/cluster-$i.json -n "${allocatedAtomixIps[*]}" >/dev/null
+    $ONOS_ROOT/tools/test/bin/onos-gen-config "${allocatedOnosIps[$pos]}" /tmp/cluster-$i.json -n "${allocatedAtomixIps[*]}" >/dev/null
     sudo docker exec onos$i mkdir /root/onos/config
     echo "Copying configuration to onos$i"
     sudo docker cp /tmp/cluster-$i.json onos$i:/root/onos/config/cluster.json
