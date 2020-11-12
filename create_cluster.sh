@@ -2,7 +2,8 @@
 
 #Some info from: https://github.com/ralish/bash-script-template/blob/stable/script.sh
 
-netName="onos-cluster-net"
+combinedNetName="onos-net"
+#atomixNetName="atomix-net"
 creatorKey="creator"
 creatorValue="onos-cluster-create"
 
@@ -137,8 +138,9 @@ nextIp(){
 create_net_ine(){
   if [[ ! $(sudo docker network ls --format "{{.Name}}" --filter label=$creatorKey=$creatorValue) ]];
   then
-      sudo docker network create -d bridge $netName --subnet $customSubnet --gateway $customGateway --label "$creatorKey=$creatorValue" >/dev/null
-      echo "Creating Docker network $netName ..."
+      # --label "$creatorKey=$creatorValue"
+      sudo docker network create --driver bridge --subnet $customSubnet --gateway $customGateway $combinedNetName >/dev/null
+      echo "Creating Docker network $combinedNetName ..."
   fi
 }
 
@@ -162,9 +164,9 @@ create_atomix(){
   for (( i=1; i<=$atomixNum; i++ ))
   do
     usedIps=("${emptyArray[@]}" "${allocatedAtomixIps[@]}")
-    subnet=$(sudo docker inspect $netName | jq -c '.[0].IPAM.Config[0].Subnet' | tr -d '"')
-    usedIps+=($(sudo docker inspect $netName | jq -c '.[0].IPAM.Config[0].Gateway' | tr -d '"'))
-    sudo docker inspect onos-cluster-net | jq -c '.[0].Containers[] | .IPv4Address' |\
+    subnet=$(sudo docker inspect $combinedNetName | jq -c '.[0].IPAM.Config[0].Subnet' | tr -d '"')
+    usedIps+=($(sudo docker inspect $combinedNetName | jq -c '.[0].IPAM.Config[0].Gateway' | tr -d '"'))
+    sudo docker inspect $combinedNetName | jq -c '.[0].Containers[] | .IPv4Address' |\
     while read -r ipAndMask;
     do
       usedIp=$(echo $ipAndMask | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}')
@@ -178,7 +180,8 @@ create_atomix(){
     do
       if ! containsElement $currentIp "${usedIps[@]}";
       then
-        sudo docker create -t --name atomix-$i --hostname atomix-$i --net $netName --ip $currentIp $atomixImage >/dev/null
+        #
+        sudo docker create -t --name atomix-$i --hostname atomix-$i --net $combinedNetName --ip $currentIp $atomixImage >/dev/null
         echo "Creating atomix-$i container with IP: $currentIp"
         goodIP=$currentIp
       fi
@@ -198,9 +201,9 @@ create_onos(){
   for (( i=1; i<=$onosNum; i++ ))
   do
     usedIps=("${emptyArray[@]}" "${allocatedOnosIps[@]}" "${allocatedAtomixIps[@]}")
-    subnet=$(sudo docker inspect $netName | jq -c '.[0].IPAM.Config[0].Subnet' | tr -d '"')
-    usedIps+=($(sudo docker inspect $netName | jq -c '.[0].IPAM.Config[0].Gateway' | tr -d '"'))
-    sudo docker inspect onos-cluster-net | jq -c '.[0].Containers[] | .IPv4Address' |\
+    subnet=$(sudo docker inspect $combinedNetName | jq -c '.[0].IPAM.Config[0].Subnet' | tr -d '"')
+    usedIps+=($(sudo docker inspect $combinedNetName | jq -c '.[0].IPAM.Config[0].Gateway' | tr -d '"'))
+    sudo docker inspect $combinedNetName | jq -c '.[0].Containers[] | .IPv4Address' |\
     while read -r ipAndMask;
     do
       usedIp=$(echo $ipAndMask | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}')
@@ -214,12 +217,13 @@ create_onos(){
     do
       if ! containsElement $currentIp "${usedIps[@]}";
       then
+        # 
         echo "Starting onos$i container with IP: $currentIp"
         sudo docker run -t -d \
           --name onos$i \
           --hostname onos$i \
-          --net $netName \
           --ip $currentIp \
+          --net $combinedNetName \
           -e ONOS_APPS="drivers,openflow-base,netcfghostprovider,lldpprovider,gui2" \
           $onosImage >/dev/null
 
@@ -239,7 +243,8 @@ apply_atomix_config(){
   do
     pos=$((i-1))
     cd
-    $ONOS_ROOT/tools/test/bin/atomix-gen-config "${allocatedAtomixIps[$pos]}" $logs_and_configs_dir/atomix-$i.conf ${allocatedAtomixIps[*]} >/dev/null
+    #"${allocatedAtomixIps[$pos]}" ${allocatedAtomixIps[*]}
+    $ONOS_ROOT/tools/test/bin/atomix-gen-config "atomix-$i" $logs_and_configs_dir/atomix-$i.conf atomix-1 atomix-2 atomix-3  >/dev/null
     sudo docker cp $logs_and_configs_dir/atomix-$i.conf atomix-$i:/opt/atomix/conf/atomix.conf
     sudo docker start atomix-$i >/dev/null
     echo "Starting container atomix-$i"
@@ -247,23 +252,49 @@ apply_atomix_config(){
 }
 
 apply_onos_config(){
-  for (( i=1; i<=$onosNum; i++ ))
-  do
-    pos=$((i-1))
-    cd
-    $ONOS_ROOT/tools/test/bin/onos-gen-config "${allocatedOnosIps[$pos]}" $logs_and_configs_dir/cluster-$i.json -n ${allocatedAtomixIps[*]} >/dev/null
+  #for (( i=1; i<=$onosNum; i++ ))
+  #do
+  #  pos=$((i-1))
+  #  cd
+  #  # ${allocatedAtomixIps[*]}
+  #  $ONOS_ROOT/tools/test/bin/onos-gen-config "${allocatedOnosIps[$pos]}" $logs_and_configs_dir/cluster-$i.json -n atomix-1 atomix-2 atomix-3 >/dev/null
+  #  sudo docker exec onos$i mkdir /root/onos/config
+  #  echo "Copying configuration to onos$i"
+  #  sudo docker cp $logs_and_configs_dir/cluster-$i.json onos$i:/root/onos/config/cluster.json
+  #  echo "Restarting container onos$i"
+  #  sudo docker restart onos$i >/dev/null
+  #done
+
+    i=1
+    $ONOS_ROOT/tools/test/bin/onos-gen-config "${allocatedOnosIps[0]}" $logs_and_configs_dir/cluster-$i.json -n atomix-1 >/dev/null
     sudo docker exec onos$i mkdir /root/onos/config
     echo "Copying configuration to onos$i"
     sudo docker cp $logs_and_configs_dir/cluster-$i.json onos$i:/root/onos/config/cluster.json
     echo "Restarting container onos$i"
     sudo docker restart onos$i >/dev/null
-  done
+
+    i=2
+    $ONOS_ROOT/tools/test/bin/onos-gen-config "${allocatedOnosIps[1]}" $logs_and_configs_dir/cluster-$i.json -n atomix-2 >/dev/null
+    sudo docker exec onos$i mkdir /root/onos/config
+    echo "Copying configuration to onos$i"
+    sudo docker cp $logs_and_configs_dir/cluster-$i.json onos$i:/root/onos/config/cluster.json
+    echo "Restarting container onos$i"
+    sudo docker restart onos$i >/dev/null
+
+    i=3
+    $ONOS_ROOT/tools/test/bin/onos-gen-config "${allocatedOnosIps[2]}" $logs_and_configs_dir/cluster-$i.json -n atomix-2 atomix-3 >/dev/null
+    sudo docker exec onos$i mkdir /root/onos/config
+    echo "Copying configuration to onos$i"
+    sudo docker cp $logs_and_configs_dir/cluster-$i.json onos$i:/root/onos/config/cluster.json
+    echo "Restarting container onos$i"
+    sudo docker restart onos$i >/dev/null
 }
 
 # $@ = Each parameter is one container name
 save_docker_logs(){
   for name in $@
   do
+    # Process "docker logs -f" will end when container stops
     nohup docker logs -f $name >$logs_and_configs_dir/$name.log 2>&1 &
   done
 }
@@ -275,11 +306,11 @@ function main() {
     pull_if_not_present $atomixImage
     pull_if_not_present $onosImage
     clone_onos
+    create_net_ine
 
     # Start & Setup
     create_atomix
     create_onos
-    create_net_ine
     apply_atomix_config
     apply_onos_config
     save_docker_logs ${atomixContainerNames[@]} ${onosContainerNames[@]}
