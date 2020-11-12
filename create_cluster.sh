@@ -1,8 +1,6 @@
 #!/bin/bash
 
 combinedNetName="onos-net"
-creatorKey="creator"
-creatorValue="onos-cluster-create"
 
 # Set by bash_profile (if sourced): https://github.com/opennetworkinglab/onos/blob/master/README.md#build-onos-from-source
 ONOS_ROOT=${ONOS_ROOT:-./onos}
