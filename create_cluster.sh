@@ -4,7 +4,7 @@ combinedNetName="onos-net"
 creatorKey="creator"
 creatorValue="onos-cluster-create"
 
-# Set by bash_profile (if imported): https://github.com/opennetworkinglab/onos/blob/master/README.md#build-onos-from-source
+# Set by bash_profile (if sourced): https://github.com/opennetworkinglab/onos/blob/master/README.md#build-onos-from-source
 ONOS_ROOT=${ONOS_ROOT:-./onos}
 logs_and_configs_dir=${logs_and_configs_dir:-$PWD/../logs} # Default: /tmp
 if ! [ -d $logs_and_configs_dir ]; then
