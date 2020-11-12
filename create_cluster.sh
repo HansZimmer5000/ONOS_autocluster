@@ -16,7 +16,7 @@ fi
 
 atomixVersion="3.1.5"
 atomixImage="atomix/atomix:$atomixVersion"
-onosVersion="2.2.1"
+onosVersion="2.2.6"
 onosImage="onosproject/onos:$onosVersion"
 atomixNum=3
 onosNum=3
