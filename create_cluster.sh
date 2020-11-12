@@ -101,10 +101,13 @@ create_atomix(){
   emptyArray=()
   for (( i=1; i<=$atomixNum; i++ ))
   do
-    sudo docker create -t \
+    $ONOS_ROOT/tools/test/bin/atomix-gen-config "atomix-$i" $logs_and_configs_dir/atomix-$i.conf atomix-1 atomix-2 atomix-3  >/dev/null
+    
+    sudo docker run -d \
       --name atomix-$i \
       --hostname atomix-$i \
       --net $combinedNetName \
+      -v $logs_and_configs_dir/atomix-$i.conf:/opt/atomix/conf/atomix.conf \
       $atomixImage >/dev/null
     echo "Creating atomix-$i container"
     atomixContainerNames+=("atomix-$i")
@@ -116,40 +119,17 @@ create_onos(){
   for (( i=1; i<=$onosNum; i++ ))
   do
     echo "Starting onos$i container"
-    sudo docker run -t -d \
+    $ONOS_ROOT/tools/test/bin/onos-gen-config onos$i $logs_and_configs_dir/cluster-$i.json -n atomix-1 atomix-2 atomix-3 >/dev/null
+
+    sudo docker run -d \
       --name onos$i \
       --hostname onos$i \
       --net $combinedNetName \
+      -v $logs_and_configs_dir/cluster-$i.json:/root/onos/config/cluster.json \
       -e ONOS_APPS="drivers,openflow-base,netcfghostprovider,lldpprovider,gui2" \
       $onosImage >/dev/null
 
     onosContainerNames+=("onos$i")
-  done
-}
-
-apply_atomix_config(){
-  for (( i=1; i<=$atomixNum; i++ ))
-  do
-    pos=$((i-1))
-    cd
-    $ONOS_ROOT/tools/test/bin/atomix-gen-config "atomix-$i" $logs_and_configs_dir/atomix-$i.conf atomix-1 atomix-2 atomix-3  >/dev/null
-    sudo docker cp $logs_and_configs_dir/atomix-$i.conf atomix-$i:/opt/atomix/conf/atomix.conf
-    sudo docker start atomix-$i >/dev/null
-    echo "Starting container atomix-$i"
-  done
-}
-
-apply_onos_config(){
-  for (( i=1; i<=$onosNum; i++ ))
-  do
-    pos=$((i-1))
-    cd
-    $ONOS_ROOT/tools/test/bin/onos-gen-config onos$i $logs_and_configs_dir/cluster-$i.json -n atomix-1 atomix-2 atomix-3 >/dev/null
-    sudo docker exec onos$i mkdir /root/onos/config
-    echo "Copying configuration to onos$i"
-    sudo docker cp $logs_and_configs_dir/cluster-$i.json onos$i:/root/onos/config/cluster.json
-    echo "Restarting container onos$i"
-    sudo docker restart onos$i >/dev/null
   done
 }
 
@@ -174,8 +154,6 @@ function main() {
     # Start & Setup
     create_atomix
     create_onos
-    apply_atomix_config
-    apply_onos_config
     save_docker_logs ${atomixContainerNames[@]} ${onosContainerNames[@]}
 }
 
