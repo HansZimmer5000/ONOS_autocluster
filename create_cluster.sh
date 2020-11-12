@@ -1,9 +1,6 @@
 #!/bin/bash
 
-#Some info from: https://github.com/ralish/bash-script-template/blob/stable/script.sh
-
 combinedNetName="onos-net"
-#atomixNetName="atomix-net"
 creatorKey="creator"
 creatorValue="onos-cluster-create"
 
@@ -35,9 +32,9 @@ if [ $? != 0 ]; then
   docker_cmd="sudo $docker_cmd"
 fi
 
-# Handling arguments, taken from (goodmami)
-# https://gist.github.com/goodmami/f16bf95c894ff28548e31dc7ab9ce27b
-die() { echo "$1"; exit 1; }
+# $1 = Exit Code
+# $2 = Message
+die() { echo "$2"; exit $1; }
 
 usage() {
   cat <<EOF
@@ -51,17 +48,16 @@ EOF
 }
 
 parse_params() {
-  # Option parsing
   while [ $# -gt 0 ]; do
       case "$1" in
           --*=*)               a="${1#*=}"; o="${1#*=}"; shift; set -- "$a" "$o" "$@" ;;
-          -h|--help)           usage; exit 0; shift ;;
+          -h|--help)           usage; die 0; shift ;;
           -a|--atomix-version) atomixVersion="$2"; shift 2 ;;
           -o|--onos-version)   onosVersion="$2"; shift 2 ;;
           -i|--atomix-num)     atomixNum="$2"; shift 2 ;;
           -j|--onos-num)       onosNum="$2"; shift 2 ;;
           --)                  shift; break ;;
-          -*)                  usage; die "Invalid option: $1" ;;
+          -*)                  usage; die 1 "Invalid option: $1" ;;
           *)                   break ;;
       esac
   done
@@ -72,17 +68,10 @@ parse_params() {
   echo "subnet: $customSubnet"
 }
 
-containsElement () {
-  local e match="$1"
-  shift
-  for e; do [[ $e == "$match" ]] && return 0; done
-  return 1
-}
-
 create_net_ine(){
-  if [[ ! $($docker_cmd network ls --format "{{.Name}}" --filter label=$creatorKey=$creatorValue) ]];
+  # TODO if the existing and specified (here) network differ, we need to recreate it!
+  if [[ "$($docker_cmd network ls)" != *"$combinedNetName"*  ]];
   then
-      # --label "$creatorKey=$creatorValue"
       $docker_cmd network create --driver bridge --subnet $customSubnet --gateway $customGateway $combinedNetName >/dev/null
       echo "Creating Docker network $combinedNetName ..."
   fi
@@ -143,7 +132,7 @@ create_onos(){
 save_docker_logs(){
   for name in $@
   do
-    # Process "docker logs -f" will end when container stops
+    # "docker logs -f" will end when container stops
     nohup docker logs -f $name >$logs_and_configs_dir/$name.log 2>&1 &
   done
 }
@@ -163,5 +152,4 @@ function main() {
     save_docker_logs ${atomixContainerNames[@]} ${onosContainerNames[@]}
 }
 
-# Make it rain
 main "$@"
