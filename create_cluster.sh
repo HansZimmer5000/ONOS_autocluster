@@ -137,16 +137,16 @@ save_docker_logs(){
   done
 }
 
-function main() {
+main() {
     parse_params "$@"
 
     # Prepare
     pull_if_not_present $atomixImage
     pull_if_not_present $onosImage
     clone_onos
+    
+    # Start
     create_net_ine
-
-    # Start & Setup
     create_atomix
     create_onos
     save_docker_logs ${atomixContainerNames[@]} ${onosContainerNames[@]}
