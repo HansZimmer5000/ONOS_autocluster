@@ -29,6 +29,12 @@ allocatedOnosIps=()
 atomixContainerNames=()
 onosContainerNames=()
 
+docker_cmd="docker"
+$docker_cmd ps 1> /dev/null 2>&1
+if [ $? != 0 ]; then
+  docker_cmd="sudo $docker_cmd"
+fi
+
 # Handling arguments, taken from (goodmami)
 # https://gist.github.com/goodmami/f16bf95c894ff28548e31dc7ab9ce27b
 die() { echo "$1"; exit 1; }
@@ -74,18 +80,18 @@ containsElement () {
 }
 
 create_net_ine(){
-  if [[ ! $(sudo docker network ls --format "{{.Name}}" --filter label=$creatorKey=$creatorValue) ]];
+  if [[ ! $($docker_cmd network ls --format "{{.Name}}" --filter label=$creatorKey=$creatorValue) ]];
   then
       # --label "$creatorKey=$creatorValue"
-      sudo docker network create --driver bridge --subnet $customSubnet --gateway $customGateway $combinedNetName >/dev/null
+      $docker_cmd network create --driver bridge --subnet $customSubnet --gateway $customGateway $combinedNetName >/dev/null
       echo "Creating Docker network $combinedNetName ..."
   fi
 }
 
 pull_if_not_present(){
   echo "Pulling $1"
-  if [[ "$(sudo docker images --format '{{.Repository}}:{{.Tag}}')" != *"$1"* ]]; then
-    sudo docker pull $1 >/dev/null
+  if [[ "$($docker_cmd images --format '{{.Repository}}:{{.Tag}}')" != *"$1"* ]]; then
+    $docker_cmd pull $1 >/dev/null
   fi
 }
 
@@ -103,7 +109,7 @@ create_atomix(){
   do
     $ONOS_ROOT/tools/test/bin/atomix-gen-config "atomix-$i" $logs_and_configs_dir/atomix-$i.conf atomix-1 atomix-2 atomix-3  >/dev/null
     
-    sudo docker run -d \
+    $docker_cmd run -d \
       --name atomix-$i \
       --hostname atomix-$i \
       --net $combinedNetName \
@@ -121,7 +127,7 @@ create_onos(){
     echo "Starting onos$i container"
     $ONOS_ROOT/tools/test/bin/onos-gen-config onos$i $logs_and_configs_dir/cluster-$i.json -n atomix-1 atomix-2 atomix-3 >/dev/null
 
-    sudo docker run -d \
+    $docker_cmd run -d \
       --name onos$i \
       --hostname onos$i \
       --net $combinedNetName \
